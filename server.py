@@ -1,0 +1,39 @@
+# set FLASK_APP=./web_server/server.py
+# set FLASK_DEBUG=1
+# flask run
+from flask import Flask, render_template, redirect, request
+import csv
+app = Flask(__name__)
+
+@app.route('/')
+def main():
+    return render_template('index.html')
+
+@app.route('/<string:page_name>')
+def html_page(page_name):
+    return render_template(page_name)
+
+def write_to_file(data):
+    with open('database.txt', mode='a') as database:
+        email = data['email']
+        subject = data['subject']
+        message = data['message']
+        file = database.write(f'\n{email},{subject},{message}')
+
+def write_to_csv(data):
+    with open('database.csv', mode='w', newline='') as database_csv:
+        email = data['email']
+        subject = data['subject']
+        message = data['message']
+        csv_writer = csv.writer(database_csv)
+        csv_writer.writerow([email,subject,message])
+
+@app.route('/submit_form', methods=['GET', 'POST'])
+def submit_form():
+    if request.method == 'POST':
+        data = request.form.to_dict()
+        write_to_csv(data)
+        return redirect("/thankyou.html")
+    else:
+        return "SMTH went wrong!"
+    
