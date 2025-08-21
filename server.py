@@ -7,9 +7,29 @@ import importlib
 import csv
 app = Flask(__name__)
 
-@app.route('/')
-def main():
-    return render_template('index.html')
+@app.route("/")
+def index():
+    return render_template("index.html")
+
+@app.route("/works")
+def works():
+    return render_template('works.html', projects=projects)
+
+@app.route("/about")
+def about():
+    return render_template("about.html")
+
+@app.route("/contact")
+def contact():
+    return render_template("contact.html")
+
+@app.route('/components')
+def components():
+    return render_template('components.html')
+
+@app.route('/thankyou')
+def thankyou():
+    return render_template('thankyou.html')
 
 # Automatically discover and register all project Blueprints
 projects_folder = Path("projects")
@@ -25,17 +45,14 @@ for project_path in projects_folder.iterdir():
         projects.append({
             'name': project_path.name,
             'title': getattr(module, 'TITLE', project_path.name),
-            'image': f'/static/assets/images/{project_path.name}-hover.jpg',
+            'image': f'{project_path.name}/static/assets/images/cover.jpg',
             'endpoint': f'{project_path.name}.index'
         })
 
-@app.route('/works')
-def works():
-    return render_template('works.html', projects=projects)
 
-@app.route('/<string:page_name>')
-def html_page(page_name):
-    return render_template(page_name)
+# @app.route('/<string:page_name>')
+# def html_page(page_name):
+#     return render_template(page_name)
 
 def write_to_file(data):
     with open('database.txt', mode='a') as database:

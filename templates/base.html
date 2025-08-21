@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta content="IE=edge" http-equiv="X-UA-Compatible">
+    <meta content="width=device-width,initial-scale=1" name="viewport">
+    <meta content="description" name="description">
+    <meta name="google" content="notranslate" />
+    <meta content="Mashup templates have been developped by Orson.io team" name="author">
+
+    <!-- Disable tap highlight on IE -->
+    <meta name="msapplication-tap-highlight" content="no">
+    
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='assets/apple-icon-180x180.png') }}">
+    <title>{% block title %}{% endblock %}</title>
+    <link href="{{ url_for('static', filename='main.3f6952e4.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='assets/favicon.ico') }}" rel="icon">
+    {% block head %}{% endblock %}
+</head>
+<body>
+    {% include "_header.html" %}
+
+    <div class="section-container" style="background-image: url('{{ url_for('static', filename='assets/images/banner.jpg') }}')">
+        {% block content %}{% endblock %}
+    </div>
+
+    {% include "_footer.html" %}
+
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function (event) {
+        navActivePage();
+        });
+    </script>
+
+    <script src="{{ url_for('static', filename='main.70a66962.js') }}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>
