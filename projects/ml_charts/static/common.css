@@ -1,0 +1,45 @@
+/* Columns list checkbox */
+#columns-list .form-check {
+    display: inline-flex !important;
+    align-items: center;
+    margin-right: 15px;
+    margin-bottom: 10px;
+}
+
+#columns-list .form-check-input {
+    margin: 0;
+}
+
+#columns-list .form-check-label {
+    margin: 0 0 0 2px;
+}
+
+/* Loader */
+#loader-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    overflow: hidden;
+    display: none;
+}
+
+.loader-wrapper {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    color: white;
+}
+
+.loader-gif {
+    width: 80px;
+    height: auto;
+}

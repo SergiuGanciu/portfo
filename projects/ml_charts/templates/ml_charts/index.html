@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+
+{% block title %}003 : Machine Learning Charts{% endblock %}
+
+{% block head %}
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/colreorder/1.6.2/css/colReorder.dataTables.min.css">
+
+    <!-- Custom CSS -->
+    <link href="{{ url_for(project_name + '.static', filename='common.css') }}" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-xs-12">
+            <img src="{{ url_for(project_name + '.static', filename='/assets/images/cover.jpg') }}" class="img-responsive" alt="">
+            <div class="card-container">
+                <div class="text-center">
+                    <h1 class="h2">003 : Machine Learning Charts</h1>
+                </div>
+                <p>A web application that allows users to check whether their passwords have appeared in known data breaches. The app securely hashes the entered password using SHA-1, queries the Have I Been Pwned API, and returns the number of times the password has been exposed.</p>
+            </div>
+        </div>
+        <div class="col-md-8 col-md-offset-2 section-container-spacer">
+            <div class="row">
+                <h3>Upload your CSV</h3>
+                <form id="csv-form" method="POST" enctype="multipart/form-data">
+                    <input id="csv-file" type="file" name="file" accept=".csv" required>
+                    <button type="submit">Upload</button>
+                </form>
+
+                <div id="columns-container" style="margin-top:20px; display:none;">
+                    <h3>Choose columns</h3>
+                    <form id="columns-form">
+                        <div id="columns-list" class="d-flex flex-wrap"></div>
+                        <button type="submit" class="btn btn-success">Show Table</button>
+                    </form>
+                </div>
+
+                <div id="table-container" style="display:none;">
+                    <h3>Data Table</h3>
+                    <div id="generated-table" style="background-color:#b2cbce; margin-top:20px;"></div>
+                </div>
+
+                <div id="chart-container" style="margin-top:20px; display:none;">
+                    <h3>Chart</h3>
+                    <form id="chart-form">
+                        <span id="chart-limit"></span>
+                        <button type="submit" class="btn btn-success">Generate Chart</button>
+                    </form>
+                </div>
+
+                <!-- Loader -->
+                <div id="loader-overlay">
+                    <div class="loader-wrapper">
+                        <img src="{{ url_for(project_name + '.static', filename='assets/images/loader.gif') }}" 
+                            alt="Loading..." class="loader-gif">
+                        <p>Loading, please wait...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <!-- DataTables JS -->
+    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/colreorder/1.6.2/js/dataTables.colReorder.min.js"></script>
+
+    <script>
+    $(document).ready(function() {
+        $('#csv-form').on('submit', function(e) {
+            e.preventDefault();
+
+            var formData = new FormData(this);
+            $('#loader-overlay').show();
+            $.ajax({
+                url: "{{ url_for(project_name + '.get_columns') }}",
+                type: "POST",
+                data: formData,
+                contentType: false,
+                processData: false,
+                success: function(response) {
+                    $('#loader-overlay').hide();
+
+                    if(response.columns) {
+                        $('#columns-list').empty();
+                        
+                        // Checkbox 'Select All'
+                        $('#columns-list').append(`
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="checkbox" id="select-all">
+                                <label class="form-check-label" for="select-all"><b>Select All</b></label>
+                            </div>
+                        `);
+
+                        // Columns checkbox
+                        response.columns.forEach(col => {
+                            $('#columns-list').append(`
+                                <div class="form-check">
+                                    <input class="form-check-input column-checkbox" type="checkbox" name="columns" value="${col}">
+                                    <label class="form-check-label">${col}</label>
+                                </div>
+                            `);
+                        });
+                        $('#columns-container').show();
+
+                        // Handler for 'Select All' checkbox
+                        $(document).on('change', '#select-all', function() {
+                            $('.column-checkbox').prop('checked', $(this).prop('checked'));
+                        });
+
+                        $(document).on('change', '.column-checkbox', function() {
+                            if(!$(this).prop('checked')) {
+                                // If user unchecked one checkbox, deactivate 'Select All' checkbox
+                                $('#select-all').prop('checked', false);
+                            } else {
+                                // If user selected all checboxes manually, activate 'Select All' checkbox
+                                let allChecked = $('.column-checkbox').length === $('.column-checkbox:checked').length;
+                                $('#select-all').prop('checked', allChecked);
+                            }
+                        });
+                    }
+                },
+                error: function(xhr) {
+                    alert("Error: " + xhr.responseJSON.error);
+                }
+            });
+        });
+
+        $('#columns-form').on('submit', function(e) {
+            e.preventDefault();
+            let file = $('#csv-file')[0].files[0];
+            let formData = new FormData();
+            $('#loader-overlay').show();
+
+            formData.append("file", file);
+
+            $('input[name="columns"]:checked').each(function() {
+                formData.append("columns[]", $(this).val());
+            });
+
+            $.ajax({
+                url: "{{ url_for(project_name + '.filter_columns') }}",
+                type: "POST",
+                data: formData,
+                contentType: false,
+                processData: false,
+                success: function(response) {
+                    $('#loader-overlay').hide();
+                    $('#table-container').css('display', 'block');
+                    $('#generated-table').html(response.table_html);
+                    $('table').DataTable({
+                        scrollX: true,
+                        autoWidth: false,
+                        pageLength: 10,
+                        lengthMenu: [5, 10, 25, 50, 100],
+                        colReorder: true
+                    });
+                }
+            });
+        });
+    });
+    </script>
+
+{% endblock %}
