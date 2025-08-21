@@ -20,7 +20,7 @@
                 <div class="text-center">
                     <h1 class="h2">003 : Machine Learning Charts</h1>
                 </div>
-                <p>A web application that allows users to check whether their passwords have appeared in known data breaches. The app securely hashes the entered password using SHA-1, queries the Have I Been Pwned API, and returns the number of times the password has been exposed.</p>
+                <p>A web application built that allows users to upload their own CSV files, select the columns they need, and generate interactive tables and charts based on the selected data.</p>
             </div>
         </div>
         <div class="col-md-8 col-md-offset-2 section-container-spacer">
@@ -32,25 +32,34 @@
                 </form>
 
                 <div id="columns-container" style="margin-top:20px; display:none;">
-                    <h3>Choose columns</h3>
+                    <h3>Generate Table</h3>
                     <form id="columns-form">
                         <div id="columns-list" class="d-flex flex-wrap"></div>
                         <button type="submit" class="btn btn-success">Show Table</button>
                     </form>
                 </div>
 
-                <div id="table-container" style="display:none;">
-                    <h3>Data Table</h3>
-                    <div id="generated-table" style="background-color:#b2cbce; margin-top:20px;"></div>
-                </div>
+                <div id="generated-table" style="background-color:#b2cbce; margin-top:20px;"></div>
 
-                <div id="chart-container" style="margin-top:20px; display:none;">
-                    <h3>Chart</h3>
+                <div id="chart-options" style="margin-top:20px; display:none;">
+                    <h3>Generate Chart</h3>
                     <form id="chart-form">
-                        <span id="chart-limit"></span>
-                        <button type="submit" class="btn btn-success">Generate Chart</button>
+                        <label for="chart-type"><b>Select chart type:</b></label>
+                        <select id="chart-type" name="chart_type" class="form-select">
+                            <option value="line">Line Chart</option>
+                            <option value="bar">Bar Chart</option>
+                            <option value="barh">Horizontal Bar</option>
+                            <option value="hist">Histogram</option>
+                            <option value="box">Box Plot</option>
+                            <option value="area">Area Chart</option>
+                            <option value="pie">Pie Chart</option>
+                            <option value="scatter">Scatter Plot</option>
+                        </select>
+                        <button type="submit" class="btn btn-primary" style="margin-top:10px;">Generate Chart</button>
                     </form>
                 </div>
+
+                <div id="chart-container" style="margin-top:20px; text-align:center;"></div>
 
                 <!-- Loader -->
                 <div id="loader-overlay">
@@ -111,6 +120,7 @@
                             `);
                         });
                         $('#columns-container').show();
+                        $('#chart-options').show();
 
                         // Handler for 'Select All' checkbox
                         $(document).on('change', '#select-all', function() {
@@ -130,6 +140,7 @@
                     }
                 },
                 error: function(xhr) {
+                    $('#loader-overlay').hide();
                     alert("Error: " + xhr.responseJSON.error);
                 }
             });
@@ -155,8 +166,7 @@
                 processData: false,
                 success: function(response) {
                     $('#loader-overlay').hide();
-                    $('#table-container').css('display', 'block');
-                    $('#generated-table').html(response.table_html);
+                    $('#table-container').html(response.table_html);
                     $('table').DataTable({
                         scrollX: true,
                         autoWidth: false,
@@ -164,6 +174,48 @@
                         lengthMenu: [5, 10, 25, 50, 100],
                         colReorder: true
                     });
+                },
+                error: function(xhr) {
+                    $('#loader-overlay').hide();
+                    alert("Error: " + xhr.responseJSON.error);
+                }
+            });
+        });
+
+        $('#chart-form').on('submit', function(e) {
+            e.preventDefault();
+            let file = $('#csv-file')[0].files[0];
+            let chartType = $('#chart-type').val();
+            let formData = new FormData();
+
+            $('#loader-overlay').show();
+
+            formData.append("file", file);
+            formData.append("chart_type", chartType);
+
+            $('input[name="columns"]:checked').each(function() {
+                formData.append("columns[]", $(this).val());
+            });
+
+            $.ajax({
+                url: "{{ url_for(project_name + '.generate_chart') }}",
+                type: "POST",
+                data: formData,
+                contentType: false,
+                processData: false,
+                success: function(response) {
+                    $('#loader-overlay').hide();
+                    if(response.chart) {
+                        $('#chart-container').html(
+                            `<img src="data:image/png;base64,${response.chart}" class="img-fluid rounded shadow">`
+                        );
+                    } else if(response.error) {
+                        alert(response.error);
+                    }
+                },
+                error: function(xhr) {
+                    $('#loader-overlay').hide();
+                    alert("Error: " + xhr.responseJSON.error);
                 }
             });
         });
