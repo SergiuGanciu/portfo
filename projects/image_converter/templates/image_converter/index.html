@@ -1,4 +1,4 @@
-{% extends "base_project.html" %}
+{% extends "base.html" %}
 
 {% block title %}001 : Image Converter{% endblock %}
 
@@ -6,17 +6,12 @@
 <div class="container">
   <div class="row">
     <div class="col-xs-12">
-      <img src="{{ url_for('static', filename='assets/images/work001-01.jpg') }}" class="img-responsive" alt="">
+      <img src="{{ url_for(project_name + '.static', filename='/assets/images/cover.jpg') }}" class="img-responsive" alt="">
       <div class="card-container">
         <div class="text-center">
           <h1 class="h2">001 : Image Converter</h1>
         </div>
-        <p>Nulla facilisi. Vivamus vestibulum, elit in scelerisque ultricies, nisl nunc pulvinar ligula, id sodales arcu sapien in nisi. Quisque libero enim, mattis non augue posuere, venenatis dapibus urna.</p>
-
-        <blockquote>
-          <p>"Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer posuere erat a ante."</p>
-          <small class="pull-right">Irina Martin</small>
-        </blockquote>
+        <p>A web application that allows users to upload images, preview them instantly, convert them to different formats (PNG, JPEG, WEBP), and download the converted file. Simple, fast, and user-friendly.</p>
       </div>
     </div>
 
@@ -24,21 +19,84 @@
     
     <div class="col-md-8 col-md-offset-2 section-container-spacer">
       <div class="row">
-        <div class="col-xs-12 col-md-6">
-          <img src="{{ url_for('static', filename='assets/images/work001-02.jpg') }}" class="img-responsive" alt="">
-          <p>Menphis skyline</p>
-        </div>
-        <div class="col-xs-12 col-md-6">
-          <img src="{{ url_for('static', filename='assets/images/work001-03.jpg') }}" class="img-responsive" alt="">
-          <p>Menphis skyline</p>
-        </div>
-      </div>
-    </div>
+        <input type="file" id="fileInput" accept="image/*">
+        <h3>Preview:</h3>
+        <img id="previewImg" style="display:none; max-width:300px; max-height:300px; border:1px solid #ccc;"/>
 
-    <div class="col-xs-12">
-      <img src="{{ url_for('static', filename='assets/images/work001-04.jpg') }}" class="img-responsive" alt="">
+        <select id="formatSelect">
+            <option value="PNG">PNG</option>
+            <option value="JPG">JPG</option>
+            <option value="WEBP">WEBP</option>
+        </select>
+
+        <!-- Submit Form -->
+        <form id="processForm" method="post" action="{{ url_for(project_name + '.process') }}" enctype="multipart/form-data" style="margin-top:20px;">
+            <button type="submit">Convert & Download</button>
+        </form>
+
+      </div>
     </div>
 
   </div>
 </div>
+
+<script>
+  let selectedFile = null;
+  const fileInput = document.getElementById("fileInput");
+  const formatSelect = document.getElementById("formatSelect");
+  const form = document.getElementById("processForm");
+  const previewImg = document.getElementById("previewImg");
+
+  // Preview
+  fileInput.addEventListener("change", (e) => {
+    selectedFile = e.target.files[0];
+
+    if (!selectedFile) {
+      previewImg.style.display = "none";
+      previewImg.src = "";
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = function(event) {
+      previewImg.src = event.target.result;
+      previewImg.style.display = "block";
+    };
+    reader.readAsDataURL(selectedFile);
+  });
+
+  // Submit
+  form.addEventListener("submit", async function(e) {
+    e.preventDefault();
+
+    if (!selectedFile) {
+      alert("Choose image!");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("image", selectedFile);
+    formData.append("format", formatSelect.value);
+
+    const response = await fetch(form.action, {
+      method: "POST",
+      body: formData
+    });
+
+    if (response.ok) {
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `converted.${formatSelect.value.toLowerCase()}`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } else {
+      alert("Error on handle!");
+    }
+  });
+</script>
 {% endblock %}
