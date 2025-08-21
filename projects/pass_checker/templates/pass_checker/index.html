@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block title %}002 : Password Checker{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-xs-12">
+            <img src="{{ url_for(project_name + '.static', filename='/assets/images/cover.jpg') }}" class="img-responsive" alt="">
+            <div class="card-container">
+                <div class="text-center">
+                    <h1 class="h2">002 : Password Checker</h1>
+                </div>
+                <p>A web application that allows users to check whether their passwords have appeared in known data breaches. The app securely hashes the entered password using SHA-1, queries the Have I Been Pwned API, and returns the number of times the password has been exposed.</p>
+            </div>
+        </div>
+        <div class="col-md-8 col-md-offset-2 section-container-spacer">
+            <div class="row">
+
+                <!-- Submit Form -->
+                <form id="processForm" method="post" 
+                    action="{{ url_for(project_name + '.pwned_api_check') }}" 
+                    enctype="multipart/form-data" style="margin-top:20px;">
+                    <input id="passInput" name="password" type="password" placeholder="Enter password">
+                    <button type="submit">Check Password</button>
+                </form>
+                <h3><p id="result"></p></h3>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById("processForm").addEventListener("submit", async function(event) {
+    event.preventDefault();
+
+    const password = document.getElementById("passInput").value;
+
+    const response = await fetch(this.action, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ password })
+    });
+
+    const data = await response.json();
+    document.getElementById("result").innerText = data.result;
+});
+</script>
+
+{% endblock %}
